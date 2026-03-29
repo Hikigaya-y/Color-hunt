@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KFPC Spin Event</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* --------------------------
+       GLOBAL & BACKGROUND
+       -------------------------- */
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #09090b;
+      /* Ensure your crystal image is saved as bg.jpg in the same folder */
+      background-image: url('bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    /* --------------------------
+       UI ELEMENTS
+       -------------------------- */
+    .fullscreen-btn {
+      position: absolute; 
+      top: 15px; 
+      right: 15px; 
+      padding: 8px 18px; 
+      font-size: 13px; 
+      font-weight: 600;
+      color: #111;
+      background: linear-gradient(135deg, #ffe58f, #f59e0b);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+      z-index: 25;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .fullscreen-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Shield Panel */
+    .shield-panel {
+      position: relative;
+      width: 360px;
+      max-width: 90%;
+      padding: 35px 20px;
+      background: rgba(15, 15, 20, 0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 28px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+      border: 1px solid rgba(100, 200, 255, 0.2);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .header img {
+      width: 110px;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: #c4c8d0;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 12px 0 25px 0;
+      text-align: center;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* --------------------------
+       WHEEL & POINTER
+       -------------------------- */
+    .wheel-container {
+      position: relative;
+      margin-bottom: 30px;
+      margin-top: 5px;
+    }
+
+    canvas {
+      border-radius: 50%;
+      /* The sleek, thick normal boundary */
+      border: 8px solid #fff; 
+      will-change: transform, box-shadow, border-color; 
+      cursor: pointer; 
+      transition: box-shadow 0.1s ease-out, border-color 0.1s ease-out, transform 0.2s ease-out;
+    }
+
+    canvas:hover {
+      transform: scale(1.02);
+    }
+
+    /* Idle animations for both spinning and color cycling */
+    .idle-mode {
+      animation: rgbBoundary 6s linear infinite, slowSpin 40s linear infinite;
+    }
+
+    @keyframes slowSpin {
+      from { transform: rotate(0deg) scale(1); }
+      to { transform: rotate(360deg) scale(1); }
+    }
+
+    /* Cycles through the wheel's colors seamlessly while idle */
+    @keyframes rgbBoundary {
+      0%   { border-color: #FF2A2A; box-shadow: 0 0 40px #FF2A2A88, inset 0 0 15px #FF2A2A55; }
+      16%  { border-color: #FFEA00; box-shadow: 0 0 40px #FFEA0088, inset 0 0 15px #FFEA0055; }
+      33%  { border-color: #00E676; box-shadow: 0 0 40px #00E67688, inset 0 0 15px #00E67655; }
+      50%  { border-color: #2A84FF; box-shadow: 0 0 40px #2A84FF88, inset 0 0 15px #2A84FF55; }
+      66%  { border-color: #B400FF; box-shadow: 0 0 40px #B400FF88, inset 0 0 15px #B400FF55; }
+      83%  { border-color: #FF6600; box-shadow: 0 0 40px #FF660088, inset 0 0 15px #FF660055; }
+      100% { border-color: #FF2A2A; box-shadow: 0 0 40px #FF2A2A88, inset 0 0 15px #FF2A2A55; }
+    }
+
+    .pointer-wrapper {
+      position: absolute;
+      top: -22px; /* Adjusted to overlap the new thicker border */
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,0.8));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none; 
+    }
+
+    .pointer-base {
+      width: 38px;
+      height: 12px;
+      background: linear-gradient(to right, #444, #ddd, #fff, #aaa, #333);
+      border-radius: 6px;
+      margin-bottom: -3px;
+      z-index: 11;
+      border: 1px solid #222;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
+    }
+
+    .pointer {
+      width: 22px;
+      height: 32px;
+      background: linear-gradient(135deg, #ffffff 0%, #b8d8ff 40%, #555 100%);
+      clip-path: polygon(50% 100%, 0 0, 100% 0);
+      z-index: 10;
+    }
+
+    @keyframes bounce {
+      0%   { transform: translateX(-50%) translateY(0); }
+      50%  { transform: translateX(-50%) translateY(-10px); }
+      100% { transform: translateX(-50%) translateY(0); }
+    }
+
+    /* --------------------------
+       BUTTONS & TEXT
+       -------------------------- */
+    .spin-button {
+      width: 85%;
+      padding: 16px 20px;
+      font-size: 20px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(135deg, #ffe58f, #f59e0b);
+      color: #111;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4), inset 0 2px 2px rgba(255,255,255,0.5);
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .spin-button:active:not(:disabled) {
+      transform: scale(0.96) translateY(2px);
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2), inset 0 2px 2px rgba(255,255,255,0.3);
+    }
+
+    .spin-button:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: #777;
+      cursor: not-allowed;
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    #countdown {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #c4c8d0;
+      text-align: center;
+      min-height: 21px;
+    }
+
+    /* --------------------------
+       WINNER MODAL POPUP
+       -------------------------- */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: rgba(15, 15, 20, 0.8);
+      border: 1px solid rgba(100, 200, 255, 0.3);
+      padding: 40px 30px;
+      border-radius: 30px;
+      text-align: center;
+      transform: scale(0.8) translateY(20px);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 60px rgba(100, 200, 255, 0.2);
+      width: 300px;
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .modal-winner {
+      font-size: 42px;
+      font-weight: 800;
+      margin: 0 0 20px 0;
+      text-shadow: 0 0 20px rgba(255,255,255,0.4);
+    }
+
+    .modal-loading {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spinLoader 1s ease-in-out infinite;
+      margin-top: 10px;
+    }
+
+    @keyframes spinLoader {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+
+<button class="fullscreen-btn" onclick="toggleFullScreen()">Full Screen ⛶</button>
+
+<div class="shield-panel">
+  <div class="header">
+    <img src="logo.png" alt="Logo">
+    <div class="subtitle">KFPC PRESENTS</div>
+  </div>
+
+  <h1>🌈 Spin Your Color</h1>
+
+  <div class="main">
+    <div class="wheel-container">
+      <div class="pointer-wrapper">
+        <div class="pointer-base"></div>
+        <div class="pointer"></div>
+      </div>
+      <canvas id="wheel" class="idle-mode" onclick="spin()"></canvas>
+    </div>
+
+    <button id="spinBtn" class="spin-button" onclick="spin()">SPIN TO WIN</button>
+    <div id="countdown"></div>
+  </div>
+</div>
+
+<div id="winnerModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title">You Landed On</div>
+    <div id="modalWinnerColor" class="modal-winner">Red!</div>
+    <div id="modalCountdownText" style="color: #ccc; font-size: 14px;">Redirecting to Form...</div>
+    <div class="modal-loading"></div>
+  </div>
+</div>
+
+<audio id="tickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+<audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
+
+<script>
+const colors = ["Red","Blue","Green","Yellow","Purple","Orange"];
+const colorValues = ["#FF2A2A", "#2A84FF", "#00E676", "#FFEA00", "#B400FF", "#FF6600"];
+
+let canvas = document.getElementById("wheel");
+let ctx = canvas.getContext("2d");
+let spinBtn = document.getElementById("spinBtn");
+let winnerModal = document.getElementById("winnerModal");
+
+let angle = 0;
+let spinning = false;
+
+// ------------------------------------------
+// HIGH-DPI CANVAS SCALING
+// ------------------------------------------
+const logicalSize = 300;
+const dpr = window.devicePixelRatio || 1;
+canvas.width = logicalSize * dpr;
+canvas.height = logicalSize * dpr;
+canvas.style.width = logicalSize + "px";
+canvas.style.height = logicalSize + "px";
+ctx.scale(dpr, dpr);
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+// ------------------------------------------
+// DRAW CLEAN WHEEL
+// ------------------------------------------
+function drawWheel(){
+  let cx = logicalSize / 2; 
+  let cy = logicalSize / 2;
+  // Slices fill the canvas right to the edge
+  let innerRadius = 149; 
+  let arc = 2 * Math.PI / colors.length;
+
+  ctx.clearRect(0, 0, logicalSize, logicalSize);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-Math.PI / 2); 
+  ctx.translate(-cx, -cy);
+
+  // 1. Fill Color Slices
+  for(let i=0;i<colors.length;i++){
+    ctx.beginPath();
+    ctx.fillStyle = colorValues[i];
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, innerRadius, arc*i, arc*(i+1));
+    ctx.fill();
+  }
+
+  // 2. Segment Dividers
+  for(let i=0;i<colors.length;i++){
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, innerRadius, arc*i, arc*i);
+    ctx.strokeStyle = "#1a1a1a";
+    ctx.lineWidth = 4; 
+    ctx.stroke();
+  }
+
+  // 3. Inner Shadow for Depth
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
+  let shadowGrd = ctx.createRadialGradient(cx, cy, innerRadius * 0.4, cx, cy, innerRadius);
+  shadowGrd.addColorStop(0, "rgba(0,0,0,0)");
+  shadowGrd.addColorStop(1, "rgba(0,0,0,0.5)"); 
+  ctx.fillStyle = shadowGrd;
+  ctx.fill();
+
+  // 4. Crisp Text
+  for(let i=0;i<colors.length;i++){
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(arc*i + arc/2);
+    ctx.fillStyle = colors[i] === "Yellow" ? "#111" : "#fff";
+    ctx.font = "bold 18px Poppins";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle"; 
+    // Shifted text slightly outwards to fit the cleaner layout
+    ctx.fillText(colors[i], innerRadius - 65, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // 5. Center Glowing Jewel Cap
+  ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 2 * Math.PI);
+  let capOuterGrd = ctx.createRadialGradient(cx, cy, 5, cx, cy, 30);
+  capOuterGrd.addColorStop(0, "#222"); capOuterGrd.addColorStop(1, "#000");
+  ctx.fillStyle = capOuterGrd; ctx.fill(); 
+  ctx.strokeStyle = "rgba(100, 200, 255, 0.4)"; ctx.lineWidth = 3; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+  let capInnerGrd = ctx.createLinearGradient(cx-20, cy-20, cx+20, cy+20);
+  capInnerGrd.addColorStop(0, "rgba(255,255,255,0.9)"); 
+  capInnerGrd.addColorStop(0.5, "rgba(100,200,255,0.6)");
+  capInnerGrd.addColorStop(1, "rgba(200,100,255,0.8)");
+  ctx.fillStyle = capInnerGrd; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cx, cy, 8, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill();
+}
+
+drawWheel();
+
+// ------------------------------------------
+// SPIN LOGIC & INTERACTIVE BORDER
+// ------------------------------------------
+function spin(){
+  if(spinning) return;
+  spinning = true;
+
+  // Removes the idle rainbow border and slow rotation
+  canvas.classList.remove("idle-mode");
+  canvas.style.animation = "none"; 
+  
+  canvas.style.cursor = "default";
+  spinBtn.innerText = "SPINNING... 🎡";
+  spinBtn.disabled = true;
+
+  let tickSound = document.getElementById("tickSound");
+  let winSound = document.getElementById("winSound");
+
+  winSound.play().catch(()=>{});
+  winSound.pause();
+  winSound.currentTime = 0;
+
+  let spinAngle = Math.random()*2000 + 3500; 
+  let duration = 4500; 
+  let start = null;
+  let lastAngle = angle; 
+  let pegSpacing = 20; 
+
+  function animate(time){
+    if(!start) start = time;
+    let progress = time - start;
+    let t = progress / duration;
+    let ease = 1 - Math.pow(1 - t, 4); 
+
+    angle = spinAngle * ease;
+    canvas.style.transform = `rotate(${angle}deg)`;
+
+    // Interactive Core: Solid boundary changes color dynamically as it spins
+    let currentDeg = angle % 360;
+    let segment = 360 / colors.length;
+    let currentIndex = Math.floor(((360 - currentDeg) % 360) / segment) % colors.length;
+    let currentColorHex = colorValues[currentIndex];
+    
+    // JS explicitly sets the border color and glow to match the slice
+    canvas.style.borderColor = currentColorHex;
+    canvas.style.boxShadow = `0 0 70px ${currentColorHex}aa, 0 0 25px ${currentColorHex}, inset 0 0 20px ${currentColorHex}55`;
+
+    if (Math.floor(angle / pegSpacing) > Math.floor(lastAngle / pegSpacing)) {
+      let click = tickSound.cloneNode(true);
+      click.volume = 0.5;
+      click.play().catch(e => {});
+      if (navigator.vibrate) navigator.vibrate(10);
+      bouncePointer();
+    }
+
+    lastAngle = angle;
+
+    if(progress < duration){
+      requestAnimationFrame(animate);
+    } else {
+      finishSpin();
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// ------------------------------------------
+// POST-SPIN WINNER LOGIC
+// ------------------------------------------
+function finishSpin(){
+  let degrees = angle % 360;
+  let segment = 360 / colors.length;
+  let index = Math.floor(((360 - degrees) % 360) / segment) % colors.length;
+  
+  let selectedColor = colors[index];
+  let selectedColorHex = colorValues[index];
+
+  spinBtn.innerText = "WINNER! 🎉";
+
+  let winSound = document.getElementById("winSound");
+  winSound.currentTime = 0;
+  winSound.play().catch(e => {});
+
+  let winnerText = document.getElementById("modalWinnerColor");
+  winnerText.innerText = selectedColor + "!";
+  winnerText.style.color = selectedColor === "Yellow" ? "#F6D03F" : selectedColorHex; 
+  
+  winnerModal.classList.add("active");
+
+  launchColorConfetti(selectedColorHex);
+
+  let countdownText = document.getElementById("modalCountdownText");
+  let timeLeft = 3; 
+  
+  countdownText.innerText = `Redirecting in ${timeLeft}...`;
+
+  let countdownTimer = setInterval(() => {
+    timeLeft--;
+    if (timeLeft > 0) {
+      countdownText.innerText = `Redirecting in ${timeLeft}...`;
+    } else {
+      clearInterval(countdownTimer);
+      countdownText.innerText = "Redirecting now...";
+      
+      let formBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfw66vDJKTwGG3rxuQhHX0vyB2I5wVvqtgkYGx6on8PWfa0Kw/viewform?usp=pp_url&entry.2109138769=";
+      window.location.href = formBaseUrl + encodeURIComponent(selectedColor);
+    }
+  }, 1000); 
+}
+
+function bouncePointer(){
+  let pointerWrapper = document.querySelector(".pointer-wrapper");
+  pointerWrapper.style.animation = "none";
+  void pointerWrapper.offsetWidth; 
+  pointerWrapper.style.animation = "bounce 0.15s ease";
+}
+
+// ------------------------------------------
+// LIGHT, FLOATING CONFETTI
+// ------------------------------------------
+function launchColorConfetti(hexColor){
+  var duration = 3000;
+  var end = Date.now() + duration;
+  
+  var festiveColors = [hexColor, '#ffffff', '#fffbe6', '#FFD700'];
+
+  (function frame() {
+    confetti({
+      particleCount: 2, 
+      angle: 60,
+      spread: 70,
+      origin: { x: 0, y: 0.6 }, 
+      colors: festiveColors,
+      shapes: ['circle', 'square'],
+      gravity: 0.4,  
+      scalar: 0.7,   
+      ticks: 400     
+    });
+    confetti({
+      particleCount: 2, 
+      angle: 120,
+      spread: 70,
+      origin: { x: 1, y: 0.6 },
+      colors: festiveColors,
+      shapes: ['circle', 'square'],
+      gravity: 0.4,  
+      scalar: 0.7,   
+      ticks: 400     
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  }());
+}
+</script>
+
+</body>
+</html>
