@@ -18,7 +18,6 @@
       align-items: center;
       justify-content: center;
       background-color: #09090b;
-      /* Ensure your crystal image is saved as bg.jpg in the same folder */
       background-image: url('bg.jpg');
       background-size: cover;
       background-position: center;
@@ -35,15 +34,14 @@
     .shield-panel {
       position: relative;
       width: 95vw;
-      max-width: 500px;
+      max-width: 1200px; /* Increased to allow wide expansion on desktops */
       height: 95vh;
-      max-height: 850px;
-      padding: 3vh 20px;
+      padding: 4vh 2vw;
       box-sizing: border-box;
       background: rgba(15, 15, 20, 0.45);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border-radius: 28px;
+      border-radius: 36px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2);
       display: flex;
       flex-direction: column;
@@ -58,13 +56,13 @@
     }
 
     .header img {
-      width: 110px;
-      margin-bottom: 8px;
+      width: clamp(100px, 12vmin, 180px); /* Image scales with screen */
+      margin-bottom: 1vmin;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
     }
 
     .subtitle {
-      font-size: 11px;
+      font-size: clamp(11px, 1.5vmin, 16px);
       color: #c4c8d0;
       letter-spacing: 2px;
       text-transform: uppercase;
@@ -73,9 +71,9 @@
     }
 
     h1 {
-      font-size: clamp(22px, 5vw, 28px);
+      font-size: clamp(24px, 5vmin, 46px); /* Title scales dynamically */
       font-weight: 700;
-      margin: 10px 0;
+      margin: 2vmin 0;
       text-align: center;
       letter-spacing: -0.5px;
       text-shadow: 0 4px 10px rgba(0,0,0,0.8);
@@ -95,8 +93,8 @@
        -------------------------- */
     .wheel-container {
       position: relative;
-      width: 85vw;
-      max-width: 320px;
+      width: 75vmin; /* 75% of the shortest viewport side ensures it fits anywhere */
+      max-width: 800px;
       aspect-ratio: 1 / 1;
       margin-bottom: 4vh;
       display: flex;
@@ -108,7 +106,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      border: 8px solid #fff; 
+      border: clamp(6px, 1.5vmin, 12px) solid #fff; /* Border scales up */
       box-sizing: border-box;
       will-change: transform, box-shadow, border-color; 
       cursor: pointer; 
@@ -140,7 +138,7 @@
 
     .pointer-wrapper {
       position: absolute;
-      top: -18px; 
+      top: -4%; /* Scaled dynamically */
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
@@ -152,19 +150,19 @@
     }
 
     .pointer-base {
-      width: 38px;
-      height: 12px;
+      width: clamp(38px, 6vmin, 60px);
+      height: clamp(12px, 2vmin, 20px);
       background: linear-gradient(to right, #444, #ddd, #fff, #aaa, #333);
-      border-radius: 6px;
-      margin-bottom: -3px;
+      border-radius: 8px;
+      margin-bottom: -5%;
       z-index: 11;
       border: 1px solid #222;
       box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
     }
 
     .pointer {
-      width: 22px;
-      height: 32px;
+      width: clamp(22px, 4vmin, 40px);
+      height: clamp(32px, 6vmin, 55px);
       background: linear-gradient(135deg, #ffffff 0%, #b8d8ff 40%, #555 100%);
       clip-path: polygon(50% 100%, 0 0, 100% 0);
       z-index: 10;
@@ -181,15 +179,16 @@
        -------------------------- */
     .spin-button {
       width: 85%;
-      padding: 16px 20px;
-      font-size: clamp(18px, 4vw, 20px);
+      max-width: 500px;
+      padding: clamp(16px, 3vmin, 24px) 20px;
+      font-size: clamp(20px, 4vmin, 30px); /* Larger button text */
       border-radius: 50px;
       border: none;
       background: linear-gradient(135deg, #ffe58f, #f59e0b);
       color: #111;
       cursor: pointer;
       font-weight: 800;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4), inset 0 2px 2px rgba(255,255,255,0.5);
       font-family: 'Poppins', sans-serif;
@@ -210,10 +209,10 @@
 
     #countdown {
       margin-top: 15px;
-      font-size: 14px;
+      font-size: clamp(14px, 2vmin, 18px);
       color: #c4c8d0;
       text-align: center;
-      min-height: 21px;
+      min-height: 25px;
     }
 
     /* --------------------------
@@ -242,13 +241,13 @@
     .modal-content {
       background: rgba(15, 15, 20, 0.8);
       border: 1px solid rgba(100, 200, 255, 0.3);
-      padding: 40px 30px;
+      padding: clamp(30px, 5vmin, 60px) clamp(20px, 4vmin, 40px);
       border-radius: 30px;
       text-align: center;
       transform: scale(0.8) translateY(20px);
       transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 60px rgba(100, 200, 255, 0.2);
-      width: 300px;
+      width: clamp(280px, 40vw, 450px);
     }
 
     .modal-overlay.active .modal-content {
@@ -256,7 +255,7 @@
     }
 
     .modal-title {
-      font-size: 16px;
+      font-size: clamp(16px, 2.5vmin, 22px);
       color: #aaa;
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -264,7 +263,7 @@
     }
 
     .modal-winner {
-      font-size: 42px;
+      font-size: clamp(40px, 8vmin, 60px);
       font-weight: 800;
       margin: 0 0 20px 0;
       text-shadow: 0 0 20px rgba(255,255,255,0.4);
@@ -272,13 +271,13 @@
 
     .modal-loading {
       display: inline-block;
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(255,255,255,0.3);
+      width: clamp(24px, 4vmin, 36px);
+      height: clamp(24px, 4vmin, 36px);
+      border: 4px solid rgba(255,255,255,0.3);
       border-radius: 50%;
       border-top-color: #fff;
       animation: spinLoader 1s ease-in-out infinite;
-      margin-top: 10px;
+      margin-top: 15px;
     }
 
     @keyframes spinLoader {
@@ -315,7 +314,7 @@
   <div class="modal-content">
     <div class="modal-title">You Landed On</div>
     <div id="modalWinnerColor" class="modal-winner">Red!</div>
-    <div id="modalCountdownText" style="color: #ccc; font-size: 14px;">Redirecting to Form...</div>
+    <div id="modalCountdownText" style="color: #ccc; font-size: clamp(14px, 2.5vmin, 18px);">Redirecting to Form...</div>
     <div class="modal-loading"></div>
   </div>
 </div>
@@ -339,8 +338,8 @@ let spinning = false;
 // HIGH-DPI CANVAS SCALING & CSS RESPONSIVENESS
 // ------------------------------------------
 const logicalSize = 300; 
-// We render at 3x resolution internally so it stays sharp regardless of how big CSS scales it.
-const renderSize = logicalSize * 3; 
+// Render at 4x resolution so it stays ultra-sharp when CSS scales it up on giant desktop monitors.
+const renderSize = logicalSize * 4; 
 
 canvas.width = renderSize;
 canvas.height = renderSize;
