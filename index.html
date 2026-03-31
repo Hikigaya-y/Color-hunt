@@ -30,11 +30,10 @@
     /* --------------------------
        UI ELEMENTS
        -------------------------- */
-    /* Shield Panel dynamically fills the screen up to a max-width/height */
     .shield-panel {
       position: relative;
       width: 95vw;
-      max-width: 1200px; /* Increased to allow wide expansion on desktops */
+      max-width: 1200px;
       height: 95vh;
       padding: 4vh 2vw;
       box-sizing: border-box;
@@ -56,7 +55,7 @@
     }
 
     .header img {
-      width: clamp(100px, 12vmin, 180px); /* Image scales with screen */
+      width: clamp(100px, 12vmin, 180px);
       margin-bottom: 1vmin;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
     }
@@ -71,7 +70,7 @@
     }
 
     h1 {
-      font-size: clamp(24px, 5vmin, 46px); /* Title scales dynamically */
+      font-size: clamp(24px, 5vmin, 46px);
       font-weight: 700;
       margin: 2vmin 0;
       text-align: center;
@@ -93,7 +92,7 @@
        -------------------------- */
     .wheel-container {
       position: relative;
-      width: 75vmin; /* 75% of the shortest viewport side ensures it fits anywhere */
+      width: 75vmin;
       max-width: 800px;
       aspect-ratio: 1 / 1;
       margin-bottom: 4vh;
@@ -106,7 +105,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      border: clamp(6px, 1.5vmin, 12px) solid #fff; /* Border scales up */
+      border: clamp(6px, 1.5vmin, 12px) solid #fff;
       box-sizing: border-box;
       will-change: transform, box-shadow, border-color; 
       cursor: pointer; 
@@ -115,6 +114,14 @@
 
     canvas:hover {
       transform: scale(1.02);
+    }
+
+    canvas.disabled-wheel {
+      cursor: not-allowed;
+    }
+    
+    canvas.disabled-wheel:hover {
+      transform: scale(1); /* prevent scale on hover if disabled */
     }
 
     .idle-mode {
@@ -131,14 +138,14 @@
       16%  { border-color: #FFEA00; box-shadow: 0 0 40px #FFEA0088, inset 0 0 15px #FFEA0055; }
       33%  { border-color: #00E676; box-shadow: 0 0 40px #00E67688, inset 0 0 15px #00E67655; }
       50%  { border-color: #2A84FF; box-shadow: 0 0 40px #2A84FF88, inset 0 0 15px #2A84FF55; }
-      66%  { border-color: #FF69B4; box-shadow: 0 0 40px #FF69B488, inset 0 0 15px #FF69B455; } /* Changed to Pink */
+      66%  { border-color: #FF69B4; box-shadow: 0 0 40px #FF69B488, inset 0 0 15px #FF69B455; }
       83%  { border-color: #FF6600; box-shadow: 0 0 40px #FF660088, inset 0 0 15px #FF660055; }
       100% { border-color: #FF2A2A; box-shadow: 0 0 40px #FF2A2A88, inset 0 0 15px #FF2A2A55; }
     }
 
     .pointer-wrapper {
       position: absolute;
-      top: -4%; /* Scaled dynamically */
+      top: -4%;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
@@ -181,7 +188,7 @@
       width: 85%;
       max-width: 500px;
       padding: clamp(16px, 3vmin, 24px) 20px;
-      font-size: clamp(20px, 4vmin, 30px); /* Larger button text */
+      font-size: clamp(20px, 4vmin, 30px);
       border-radius: 50px;
       border: none;
       background: linear-gradient(135deg, #ffe58f, #f59e0b);
@@ -323,7 +330,6 @@
 <audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
 
 <script>
-// Changed Purple to Pink
 const colors = ["Red","Blue","Green","Yellow","Pink","Orange"];
 const colorValues = ["#FF2A2A", "#2A84FF", "#00E676", "#FFEA00", "#FF69B4", "#FF6600"];
 
@@ -336,16 +342,23 @@ let angle = 0;
 let spinning = false;
 
 // ------------------------------------------
-// HIGH-DPI CANVAS SCALING & CSS RESPONSIVENESS
+// CHECK LOCAL STORAGE FOR PREVIOUS SPIN
+// ------------------------------------------
+if (localStorage.getItem("kfpc_has_spun") === "true") {
+  spinBtn.innerText = "ALREADY SPUN";
+  spinBtn.disabled = true;
+  canvas.classList.add("disabled-wheel");
+  document.getElementById("countdown").innerText = "You have already claimed your spin.";
+}
+
+// ------------------------------------------
+// HIGH-DPI CANVAS SCALING
 // ------------------------------------------
 const logicalSize = 300; 
-// Render at 4x resolution so it stays ultra-sharp when CSS scales it up on giant desktop monitors.
 const renderSize = logicalSize * 4; 
 
 canvas.width = renderSize;
 canvas.height = renderSize;
-
-// Scale the context so our draw math based on 'logicalSize' works perfectly on the high-res canvas
 ctx.scale(renderSize / logicalSize, renderSize / logicalSize);
 
 // ------------------------------------------
@@ -354,18 +367,15 @@ ctx.scale(renderSize / logicalSize, renderSize / logicalSize);
 function drawWheel(){
   let cx = logicalSize / 2; 
   let cy = logicalSize / 2;
-  // Slices fill the canvas right to the edge
   let innerRadius = 149; 
   let arc = 2 * Math.PI / colors.length;
 
   ctx.clearRect(0, 0, logicalSize, logicalSize);
-
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(-Math.PI / 2); 
   ctx.translate(-cx, -cy);
 
-  // 1. Fill Color Slices
   for(let i=0;i<colors.length;i++){
     ctx.beginPath();
     ctx.fillStyle = colorValues[i];
@@ -374,7 +384,6 @@ function drawWheel(){
     ctx.fill();
   }
 
-  // 2. Segment Dividers
   for(let i=0;i<colors.length;i++){
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -384,7 +393,6 @@ function drawWheel(){
     ctx.stroke();
   }
 
-  // 3. Inner Shadow for Depth
   ctx.beginPath();
   ctx.arc(cx, cy, innerRadius, 0, 2 * Math.PI);
   let shadowGrd = ctx.createRadialGradient(cx, cy, innerRadius * 0.4, cx, cy, innerRadius);
@@ -393,7 +401,6 @@ function drawWheel(){
   ctx.fillStyle = shadowGrd;
   ctx.fill();
 
-  // 4. Crisp Text
   for(let i=0;i<colors.length;i++){
     ctx.save();
     ctx.translate(cx, cy);
@@ -407,7 +414,6 @@ function drawWheel(){
   }
   ctx.restore();
 
-  // 5. Center Glowing Jewel Cap
   ctx.beginPath(); ctx.arc(cx, cy, 30, 0, 2 * Math.PI);
   let capOuterGrd = ctx.createRadialGradient(cx, cy, 5, cx, cy, 30);
   capOuterGrd.addColorStop(0, "#222"); capOuterGrd.addColorStop(1, "#000");
@@ -427,10 +433,11 @@ function drawWheel(){
 drawWheel();
 
 // ------------------------------------------
-// SPIN LOGIC & INTERACTIVE BORDER
+// SPIN LOGIC 
 // ------------------------------------------
 function spin(){
-  if(spinning) return;
+  // Prevent spinning if already spinning OR if they already spun before
+  if(spinning || localStorage.getItem("kfpc_has_spun") === "true") return;
   spinning = true;
 
   canvas.classList.remove("idle-mode");
@@ -494,6 +501,9 @@ function spin(){
 // POST-SPIN WINNER LOGIC
 // ------------------------------------------
 function finishSpin(){
+  // RECORD THAT THE STUDENT HAS SPUN
+  localStorage.setItem("kfpc_has_spun", "true");
+
   let degrees = angle % 360;
   let segment = 360 / colors.length;
   let index = Math.floor(((360 - degrees) % 360) / segment) % colors.length;
@@ -502,6 +512,7 @@ function finishSpin(){
   let selectedColorHex = colorValues[index];
 
   spinBtn.innerText = "WINNER! 🎉";
+  canvas.classList.add("disabled-wheel");
 
   let winSound = document.getElementById("winSound");
   winSound.currentTime = 0;
@@ -583,3 +594,4 @@ function launchColorConfetti(hexColor){
 
 </body>
 </html>
+
